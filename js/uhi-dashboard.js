@@ -107,6 +107,8 @@
 
   // DOM Elements
   let elMap, elPopover, elSidePanel, elPeriodSelect, elVarSelect, elLegend, elLoading;
+  let elAboutBtn, elAboutPanel, elAboutCloseBtn;
+  let elOrgsBtn, elOrgsPanel, elOrgsCloseBtn;
 
   async function init() {
     elMap = document.getElementById('uhi-map');
@@ -116,10 +118,51 @@
     elVarSelect = document.getElementById('uhi-var-select');
     elLegend = document.getElementById('uhi-legend');
     elLoading = document.getElementById('uhi-loading');
+    elAboutBtn = document.getElementById('uhi-about-btn');
+    elAboutPanel = document.getElementById('uhi-about-panel');
+    elAboutCloseBtn = document.getElementById('uhi-about-close-btn');
+    elOrgsBtn = document.getElementById('uhi-orgs-btn');
+    elOrgsPanel = document.getElementById('uhi-orgs-panel');
+    elOrgsCloseBtn = document.getElementById('uhi-orgs-close-btn');
 
     // Setup close button on side panel
     document.getElementById('uhi-close-btn').addEventListener('click', () => {
       closeSidePanel();
+    });
+
+    // Setup about campaign toggle & close buttons
+    if (elAboutBtn) {
+      elAboutBtn.addEventListener('click', () => {
+        toggleAboutPanel();
+      });
+    }
+
+    if (elAboutCloseBtn) {
+      elAboutCloseBtn.addEventListener('click', () => {
+        closeAboutPanel();
+      });
+    }
+
+    // Setup about organizations toggle & close buttons
+    if (elOrgsBtn) {
+      elOrgsBtn.addEventListener('click', () => {
+        toggleOrgsPanel();
+      });
+    }
+
+    if (elOrgsCloseBtn) {
+      elOrgsCloseBtn.addEventListener('click', () => {
+        closeOrgsPanel();
+      });
+    }
+
+    // Keyboard shortcut (Escape closes open panels)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAboutPanel();
+        closeOrgsPanel();
+        closeSidePanel();
+      }
     });
 
     // Setup event listeners on controls
@@ -425,6 +468,74 @@
       state.highlightLayer = null;
     }
     state.selectedCellIndex = null;
+  }
+
+  function toggleAboutPanel() {
+    if (!elAboutPanel) return;
+    const willOpen = !elAboutPanel.classList.contains('open');
+    if (willOpen) {
+      closeOrgsPanel();
+      elAboutPanel.classList.add('open');
+      if (elAboutBtn) {
+        elAboutBtn.classList.add('active');
+        elAboutBtn.setAttribute('aria-expanded', 'true');
+      }
+    } else {
+      closeAboutPanel();
+    }
+  }
+
+  function openAboutPanel() {
+    if (!elAboutPanel) return;
+    closeOrgsPanel();
+    elAboutPanel.classList.add('open');
+    if (elAboutBtn) {
+      elAboutBtn.classList.add('active');
+      elAboutBtn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  function closeAboutPanel() {
+    if (!elAboutPanel) return;
+    elAboutPanel.classList.remove('open');
+    if (elAboutBtn) {
+      elAboutBtn.classList.remove('active');
+      elAboutBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function toggleOrgsPanel() {
+    if (!elOrgsPanel) return;
+    const willOpen = !elOrgsPanel.classList.contains('open');
+    if (willOpen) {
+      closeAboutPanel();
+      elOrgsPanel.classList.add('open');
+      if (elOrgsBtn) {
+        elOrgsBtn.classList.add('active');
+        elOrgsBtn.setAttribute('aria-expanded', 'true');
+      }
+    } else {
+      closeOrgsPanel();
+    }
+  }
+
+  function openOrgsPanel() {
+    if (!elOrgsPanel) return;
+    closeAboutPanel();
+    elOrgsPanel.classList.add('open');
+    if (elOrgsBtn) {
+      elOrgsBtn.classList.add('active');
+      elOrgsBtn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  function closeOrgsPanel() {
+    if (!elOrgsPanel) return;
+    elOrgsPanel.classList.remove('open');
+    if (elOrgsBtn) {
+      elOrgsBtn.classList.remove('active');
+      elOrgsBtn.setAttribute('aria-expanded', 'false');
+    }
   }
 
   function updateSidePanel(idx) {

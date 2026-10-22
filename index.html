@@ -38,6 +38,22 @@
       </div>
 
       <div class="uhi-topbar-controls">
+        <!-- About Campaign Show/Hide Toggle Button -->
+        <button id="uhi-about-btn" class="uhi-btn-about" title="Show or hide campaign information" aria-expanded="false" aria-controls="uhi-about-panel">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+          <span>About Campaign</span>
+        </button>
+
+        <!-- About Organizations Show/Hide Toggle Button -->
+        <button id="uhi-orgs-btn" class="uhi-btn-about" title="Show or hide participating organizations" aria-expanded="false" aria-controls="uhi-orgs-panel">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+          </svg>
+          <span>About Us</span>
+        </button>
+
         <div class="uhi-control-group">
           <label for="uhi-period-select">Time of Day</label>
           <select id="uhi-period-select" class="uhi-select" aria-label="Select survey period">
@@ -65,6 +81,107 @@
     <div class="uhi-main-area">
       <!-- Map Container -->
       <div id="uhi-map"></div>
+
+      <!-- Left About Campaign Pane -->
+      <aside id="uhi-about-panel" class="uhi-about-panel" aria-label="About the Campaign Panel">
+        <div class="uhi-panel-header">
+          <div class="uhi-panel-title">About the Campaign</div>
+          <button id="uhi-about-close-btn" class="uhi-close-btn" title="Close About Panel" aria-label="Close about panel">&times;</button>
+        </div>
+
+        <div class="uhi-about-content">
+          <div class="uhi-about-badge">Citizen Science • July 16, 2026</div>
+
+          <p class="uhi-about-lead">
+            The <strong>Summer 2026 Northern Virginia Urban Heat Island Mapping Campaign</strong> was a citizen-science initiative launched to identify hyper-local temperature disparities across <strong>Fairfax County</strong>, <strong>Arlington County</strong>, and the <strong>City of Alexandria</strong>.
+          </p>
+
+          <div class="uhi-card uhi-partners-card">
+            <div class="uhi-card-label">Organizing Partnership</div>
+            <p style="margin: 4px 0 0 0; font-size: 12.5px; line-height: 1.45; color: var(--uhi-text-dark);">
+              Conducted during one of the season's hottest stretches through a partnership between <strong>George Mason University’s Virginia Climate Center (VCC)</strong> and regional nonprofit <strong>Faith Alliance for Climate Solutions (FACS)</strong>.
+            </p>
+          </div>
+
+          <!-- Key Metrics Grid -->
+          <div class="uhi-stats-grid">
+            <div class="uhi-stat-box">
+              <span class="uhi-stat-number">80+</span>
+              <span class="uhi-stat-desc">Volunteers</span>
+            </div>
+            <div class="uhi-stat-box">
+              <span class="uhi-stat-number">30+</span>
+              <span class="uhi-stat-desc">Teams &amp; Routes</span>
+            </div>
+            <div class="uhi-stat-box">
+              <span class="uhi-stat-number">3</span>
+              <span class="uhi-stat-desc">Daily Intervals</span>
+            </div>
+          </div>
+
+          <h3 class="uhi-about-heading">About the Measurements</h3>
+          <p class="uhi-about-text">
+            More than 80 volunteers organized into over 30 teams, mounting portable thermal and humidity sensors to vehicle roofs. Teams drove 30 pre-selected routes across urban corridors, commercial strips, and residential neighborhoods during three coordinated intervals (morning, afternoon, and evening) to track how heat built up and lingered throughout the day.
+          </p>
+          <p class="uhi-about-text">
+            The study specifically targeted neighborhoods with dense asphalt and low tree canopy coverage. Organizers emphasized identifying vulnerable communities, such as residents facing high energy burdens or outdoor workers at heightened risk of heat-related illness.
+          </p>
+
+          <h3 class="uhi-about-heading">What You Are Seeing Here</h3>
+          <p class="uhi-about-text">
+            Researchers at the <strong>Virginia Climate Center</strong> and <strong>Virginia State Climate Office</strong> processed the mobile measurements through machine learning combined with satellite imagery to produce the continuous 100-meter surface maps shown here.
+          </p>
+          <p class="uhi-about-text">
+            The maps show a spatial snapshot of temperatures on July 16, 2026, highlighting the region's hot spots, cooling tree canopy refuges, and their relationship to surrounding built environments.
+          </p>
+
+          <h3 class="uhi-about-heading">Learn More</h3>
+          <p class="uhi-about-text">
+            Want to learn more about our campaign? Read our full report:
+          </p>
+          <div class="uhi-report-box">
+            <span class="uhi-report-badge">Full Campaign Report</span>
+            <span class="uhi-report-desc">Coming soon</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Left About Organizations Pane -->
+      <aside id="uhi-orgs-panel" class="uhi-orgs-panel" aria-label="About Our Organizations Panel">
+        <div class="uhi-panel-header">
+          <div class="uhi-panel-title">Our Organizations</div>
+          <button id="uhi-orgs-close-btn" class="uhi-close-btn" title="Close Organizations Panel" aria-label="Close organizations panel">&times;</button>
+        </div>
+
+        <div class="uhi-about-content">
+          <!-- Virginia State Climate Office -->
+          <div class="uhi-card" style="margin-bottom: 4px;">
+            <div class="uhi-card-label" style="color: var(--uhi-color-am);">State Climate Office &amp; University Partner</div>
+            <h3 class="uhi-org-title">Virginia State Climate Office</h3>
+            <p class="uhi-about-text" style="margin-top: 6px;">
+              The Virginia State Climate Office (VaSCO) serves to develop and deliver vital and timely weather and climate information to all Virginians. VaSCO is part of the <strong>Virginia Climate Center</strong> at <strong>George Mason University</strong>.
+            </p>
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+              <a href="https://www.vaclimate.gmu.edu/virginia-state-climate-office" target="_blank" rel="noopener noreferrer" class="uhi-link-btn">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width: 13px; height: 13px;"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+                <span>Visit VaSCO Website</span>
+              </a>
+              <div class="uhi-sub-link">
+                Stay in the loop with the Virginia Climate Center Newsletter (link coming soon)
+              </div>
+            </div>
+          </div>
+
+          <!-- Faith Alliance for Climate Solutions -->
+          <div class="uhi-card" style="margin-bottom: 0;">
+            <div class="uhi-card-label" style="color: #15803D;">Regional Nonprofit Partner</div>
+            <h3 class="uhi-org-title">Faith Alliance for Climate Solutions</h3>
+            <p class="uhi-about-text" style="margin-top: 6px;">
+              Faith Alliance for Climate Solutions (FACS) unites people of faith, and friends who share our values, to develop local solutions to the climate crisis. Faithful voices are valuable in the conversation on climate change, and faith-based action draws upon our deep well of love for each other and all living things. Their work is done in Northern Virginia and nearby jurisdictions.
+            </p>
+          </div>
+        </div>
+      </aside>
 
       <!-- Hover Popover showing 3 diurnal temperatures with mini barchart -->
       <div id="uhi-popover" class="uhi-popover">

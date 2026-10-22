@@ -15,6 +15,12 @@ An interactive, lightweight, zero-build web dashboard designed to explore the hi
     - **Tree Canopy Cover (%)** (high-resolution canopy metrics).
 - **Hover Popover**:
   - Instantaneous hover tooltip over any 100m grid cell displaying diurnal temperatures across all three survey periods (AM, AF, PM) with color coding matching project standards.
+- **Campaign Overview Pane**:
+  - Dedicated left-hand slide-out pane toggled by the **About Campaign** button in the top bar.
+  - Explains the citizen-science partnership (George Mason University's Virginia Climate Center and Faith Alliance for Climate Solutions), measurement strategy (80+ volunteers, 30+ teams/routes, 3 daily intervals), equity focus, machine-learning continuous surface mapping, and report link.
+- **Participating Organizations Pane**:
+  - Dedicated left-hand slide-out pane toggled by the **About Us** button in the top bar.
+  - Describes the mission, background, and website links for the **Virginia State Climate Office (VaSCO)** and the **Faith Alliance for Climate Solutions (FACS)**.
 - **Side Detail Panel**:
   - Click on any survey cell to highlight its footprint and slide open an analytical inspection panel:
     - **Tree Canopy Cover (%)** with a dynamic visual gauge and comparison to the regional baseline ($50.2\%$).
@@ -32,18 +38,19 @@ An interactive, lightweight, zero-build web dashboard designed to explore the hi
 
 ```
 web_dashboard/
-├── index.html               # Main standalone application page
-├── embed_example.html       # Responsive iframe embedding demonstration
-├── README.md                # Documentation and embedding guide
+├── index.html                      # Main standalone application page
+├── embed_example.html              # Responsive iframe embedding demonstration
+├── README.md                       # Documentation and embedding guide
+├── ARCHITECTURE_AND_DATA_FORMAT.md # Detailed architecture and binary data spec
 ├── css/
-│   └── uhi-dashboard.css    # Clean, modern styles adhering to GEMINI.md
+│   └── uhi-dashboard.css           # Clean, modern styles adhering to GEMINI.md
 ├── js/
-│   └── uhi-dashboard.js     # Analytical projection and interactive logic
+│   └── uhi-dashboard.js            # Analytical projection and interactive logic
 └── data/
-    ├── manifest.json        # Grid dimensions, bounds, stats, and color LUTs
-    ├── grid_data.bin        # Packed typed arrays for all 144,438 grid cells
-    ├── mercator_map.bin     # Precomputed EPSG:3857 canvas projection lookup table
-    └── counties.geojson     # Simplified NOVA county boundary outlines
+    ├── manifest.json               # Grid dimensions, bounds, stats, and color LUTs
+    ├── grid_data.bin               # Packed typed arrays for all 144,438 grid cells
+    ├── mercator_map.bin            # Precomputed EPSG:3857 canvas projection lookup table
+    └── counties.geojson            # Simplified NOVA county boundary outlines
 ```
 
 ---

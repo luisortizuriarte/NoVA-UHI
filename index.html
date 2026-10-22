@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NOVA Urban Heat Island & Tree Canopy Dashboard</title>
+  
+  <!-- Typography: Figtree (GEMINI.md standard) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Dashboard Styling -->
+  <link rel="stylesheet" href="css/uhi-dashboard.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #f8fafc;
+      font-family: 'Figtree', sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="uhi-container">
+    <!-- Dedicated Top Bar Element -->
+    <header class="uhi-topbar">
+      <div class="uhi-topbar-brand">
+        <h1 class="uhi-topbar-title">Northern Virginia Urban Heat Island Campaign</h1>
+        <p class="uhi-topbar-subtitle">Interactive Microclimate &amp; Tree Canopy Explorer</p>
+      </div>
+
+      <div class="uhi-topbar-controls">
+        <div class="uhi-control-group">
+          <label for="uhi-period-select">Time of Day</label>
+          <select id="uhi-period-select" class="uhi-select" aria-label="Select survey period">
+            <option value="am">Morning (AM: 6:00 – 7:00 AM)</option>
+            <option value="af" selected>Afternoon (AF: 3:00 – 4:00 PM)</option>
+            <option value="pm">Evening (PM: 7:00 – 8:00 PM)</option>
+            <option value="diurnal">Diurnal Persistence (All Periods)</option>
+          </select>
+        </div>
+
+        <div class="uhi-control-group">
+          <label for="uhi-var-select">Layer</label>
+          <select id="uhi-var-select" class="uhi-select" aria-label="Select variable layer">
+            <option value="temp" selected>Air Temperature (°F)</option>
+            <option value="anom">Temperature Anomaly (°F)</option>
+            <option value="spot">Temperature Hot &amp; Cold Spots</option>
+            <option value="pers">Diurnal Persistence Level</option>
+            <option value="canopy">Tree Canopy Cover (%)</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Map Area -->
+    <div class="uhi-main-area">
+      <!-- Map Container -->
+      <div id="uhi-map"></div>
+
+      <!-- Hover Popover showing 3 diurnal temperatures with mini barchart -->
+      <div id="uhi-popover" class="uhi-popover">
+        <div class="uhi-popover-title">
+          <span>Survey Cell (100m)</span>
+          <span style="font-weight:400; color:#7F8C8D;">Air Temp</span>
+        </div>
+        <div class="uhi-popover-row">
+          <span class="uhi-popover-label">
+            <span class="uhi-dot" style="background:#2980B9;"></span>
+            AM
+          </span>
+          <div class="uhi-pop-bar-track">
+            <div id="uhi-pop-bar-am" class="uhi-pop-bar-fill" style="background:#2980B9;"></div>
+          </div>
+          <span id="uhi-pop-am" class="uhi-popover-val" style="color:#2980B9;">—</span>
+        </div>
+        <div class="uhi-popover-row">
+          <span class="uhi-popover-label">
+            <span class="uhi-dot" style="background:#F39C12;"></span>
+            AF
+          </span>
+          <div class="uhi-pop-bar-track">
+            <div id="uhi-pop-bar-af" class="uhi-pop-bar-fill" style="background:#F39C12;"></div>
+          </div>
+          <span id="uhi-pop-af" class="uhi-popover-val" style="color:#F39C12;">—</span>
+        </div>
+        <div class="uhi-popover-row">
+          <span class="uhi-popover-label">
+            <span class="uhi-dot" style="background:#E74C3C;"></span>
+            PM
+          </span>
+          <div class="uhi-pop-bar-track">
+            <div id="uhi-pop-bar-pm" class="uhi-pop-bar-fill" style="background:#E74C3C;"></div>
+          </div>
+          <span id="uhi-pop-pm" class="uhi-popover-val" style="color:#E74C3C;">—</span>
+        </div>
+        <div class="uhi-popover-hint">Click cell to open detailed analysis</div>
+      </div>
+
+      <!-- Side Detail Panel -->
+      <aside id="uhi-side-panel" class="uhi-side-panel" aria-label="Microclimate Details Panel">
+        <div class="uhi-panel-header">
+          <div class="uhi-panel-title">Cell Microclimate Details</div>
+          <button id="uhi-close-btn" class="uhi-close-btn" title="Close Panel" aria-label="Close panel">&times;</button>
+        </div>
+
+        <!-- Tree Canopy Card -->
+        <div class="uhi-card">
+          <div class="uhi-card-label uhi-canopy-label">Tree Canopy Cover</div>
+          <div id="uhi-panel-canopy" class="uhi-card-main" style="color: #15803D;">—</div>
+          <div class="uhi-canopy-bar-bg">
+            <div id="uhi-canopy-fill" class="uhi-canopy-bar-fill"></div>
+          </div>
+          <div id="uhi-panel-canopy-sub" class="uhi-card-sub"></div>
+        </div>
+
+        <!-- Persistence Card -->
+        <div class="uhi-card">
+          <div class="uhi-card-label">Diurnal Hot / Cold Spot Persistence</div>
+          <div id="uhi-panel-pers" class="uhi-card-main">—</div>
+          <div id="uhi-panel-pers-sub" class="uhi-card-sub"></div>
+        </div>
+
+        <!-- Diurnal Temperatures Card -->
+        <div class="uhi-card">
+          <div class="uhi-card-label">Diurnal Temperatures &amp; Anomalies</div>
+          <div class="uhi-diurnal-grid">
+            <!-- AM -->
+            <div class="uhi-diurnal-item">
+              <div class="uhi-diurnal-label" style="color:#2980B9;">Morning</div>
+              <div id="uhi-d-am-val" class="uhi-diurnal-val" style="color:#2980B9;">—</div>
+              <div id="uhi-d-am-anom" class="uhi-diurnal-anom" style="color:#1F2937;">—</div>
+              <div id="uhi-d-am-tag" class="uhi-diurnal-anom" style="font-size:10px;"></div>
+            </div>
+            <!-- AF -->
+            <div class="uhi-diurnal-item">
+              <div class="uhi-diurnal-label" style="color:#F39C12;">Afternoon</div>
+              <div id="uhi-d-af-val" class="uhi-diurnal-val" style="color:#F39C12;">—</div>
+              <div id="uhi-d-af-anom" class="uhi-diurnal-anom" style="color:#1F2937;">—</div>
+              <div id="uhi-d-af-tag" class="uhi-diurnal-anom" style="font-size:10px;"></div>
+            </div>
+            <!-- PM -->
+            <div class="uhi-diurnal-item">
+              <div class="uhi-diurnal-label" style="color:#E74C3C;">Evening</div>
+              <div id="uhi-d-pm-val" class="uhi-diurnal-val" style="color:#E74C3C;">—</div>
+              <div id="uhi-d-pm-anom" class="uhi-diurnal-anom" style="color:#1F2937;">—</div>
+              <div id="uhi-d-pm-tag" class="uhi-diurnal-anom" style="font-size:10px;"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Dynamic Map Legend -->
+      <div id="uhi-legend" class="uhi-legend"></div>
+
+      <!-- Loading Indicator -->
+      <div id="uhi-loading" class="uhi-loading">
+        <div class="uhi-spinner"></div>
+        <span>Loading Microclimate Data...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Dashboard JS -->
+  <script src="js/uhi-dashboard.js"></script>
+</body>
+</html>
+

@@ -358,6 +358,17 @@
   color: #ffffff;
 }
 
+.uhi-link-btn.uhi-link-btn-green {
+  color: #15803D;
+  background: rgba(21, 128, 61, 0.08);
+  border: 1px solid rgba(21, 128, 61, 0.25);
+}
+
+.uhi-link-btn.uhi-link-btn-green:hover {
+  background: #15803D;
+  color: #ffffff;
+}
+
 .uhi-sub-link {
   font-size: 11px;
   color: var(--uhi-text-muted);

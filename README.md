@@ -17,7 +17,7 @@ An interactive, lightweight, zero-build web dashboard designed to explore the hi
   - Instantaneous hover tooltip over any 100m grid cell displaying diurnal temperatures across all three survey periods (AM, AF, PM) with color coding matching project standards.
 - **Campaign Overview Pane**:
   - Dedicated left-hand slide-out pane toggled by the **About Campaign** button in the top bar.
-  - Explains the citizen-science partnership (George Mason University's Virginia Climate Center and Faith Alliance for Climate Solutions), measurement strategy (80+ volunteers, 30+ teams/routes, 3 daily intervals), equity focus, machine-learning continuous surface mapping, and report link.
+  - Explains the citizen-science partnership (George Mason University's Virginia Climate Center and Faith Alliance for Climate Solutions), measurement strategy (80+ volunteers, 30 routes, 3 snapshots), equity focus, machine-learning continuous surface mapping, and report link.
 - **Participating Organizations Pane**:
   - Dedicated left-hand slide-out pane toggled by the **About Us** button in the top bar.
   - Describes the mission, background, and website links for the **Virginia State Climate Office (VaSCO)** and the **Faith Alliance for Climate Solutions (FACS)**.

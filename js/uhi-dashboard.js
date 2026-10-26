@@ -1,13 +1,42 @@
 /**
- * uhi-dashboard.js - Interactive NOVA Urban Heat Island Web Dashboard
- * Ultra-lightweight, zero-build, vanilla JavaScript Leaflet application.
- * Adheres strictly to GEMINI.md design standards.
+ * uhi-accessible.js - Accessible NOVA Urban Heat Island Web Dashboard
+ * Segmented Colormaps (7 segments for temp & anom, 5 quintile segments for canopy),
+ * Headings in #34495E, Temperature bar charts in #E74C3C, and floating About buttons.
  */
 
 (function () {
   'use strict';
 
-  // Constants & Projections (WGS84 Ellipsoid <-> UTM Zone 18N)
+  // 7-segment Colormaps
+  const REDS_7 = [[253, 216, 200], [252, 176, 148], [251, 132, 100], [246, 87, 62], [222, 42, 37], [181, 18, 24], [126, 5, 16]];
+  const COOLWARM_7 = [[76, 102, 214], [124, 160, 249], [176, 203, 251], [220, 220, 221], [246, 189, 164], [238, 134, 105], [201, 59, 55]];
+  // 5-quintile Canopy Colormap (YlGn)
+  const YLGN_5 = [[241, 249, 180], [182, 224, 146], [98, 187, 110], [34, 131, 66], [0, 82, 46]];
+
+  // Gradients for segmented legends
+  const REDS_STEP_GRADIENT = "#fdd8c8 0.00%, #fdd8c8 14.29%, #fcb094 14.29%, #fcb094 28.57%, #fb8464 28.57%, #fb8464 42.86%, #f6573e 42.86%, #f6573e 57.14%, #de2a25 57.14%, #de2a25 71.43%, #b51218 71.43%, #b51218 85.71%, #7e0510 85.71%, #7e0510 100.00%";
+  const COOLWARM_STEP_GRADIENT = "#4c66d6 0.00%, #4c66d6 14.29%, #7ca0f9 14.29%, #7ca0f9 28.57%, #b0cbfb 28.57%, #b0cbfb 42.86%, #dcdcdd 42.86%, #dcdcdd 57.14%, #f6bda4 57.14%, #f6bda4 71.43%, #ee8669 71.43%, #ee8669 85.71%, #c93b37 85.71%, #c93b37 100.00%";
+  const YLGN_STEP_GRADIENT = "#f1f9b4 0.00%, #f1f9b4 20.00%, #b6e092 20.00%, #b6e092 40.00%, #62bb6e 40.00%, #62bb6e 60.00%, #228342 60.00%, #228342 80.00%, #00522e 80.00%, #00522e 100.00%";
+
+  // Categorical spot colors
+  const ACCESSIBLE_SPOTS = {
+    '0': [226, 232, 240], // Not significant
+    '1': [30, 64, 175],   // Cold Spot (Blue 800)
+    '2': [185, 28, 28]    // Hot Spot (Red 700)
+  };
+
+  const ACCESSIBLE_PERSISTENCE = {
+    '0': [226, 232, 240],
+    '1': [148, 163, 184],
+    '2': [147, 197, 253],
+    '3': [59, 130, 246],
+    '4': [30, 64, 175],
+    '5': [252, 165, 165],
+    '6': [239, 68, 68],
+    '7': [185, 28, 28]
+  };
+
+  // UTM Zone 18N <-> WGS84 Transforms
   const A = 6378137.0;
   const F = 1.0 / 298.257223563;
   const K0 = 0.9996;
@@ -96,8 +125,8 @@
     overlayLayer: null,
     countiesLayer: null,
     highlightLayer: null,
-    currentPeriod: 'af', // 'am' | 'af' | 'pm' | 'diurnal'
-    currentVar: 'temp',  // 'temp' | 'anom' | 'spot' | 'canopy' | 'pers'
+    currentPeriod: 'af',
+    currentVar: 'temp',
     selectedCellIndex: null,
     canvas: null,
     ctx: null,
@@ -105,10 +134,13 @@
     canvasHeight: 479
   };
 
-  // DOM Elements
-  let elMap, elPopover, elSidePanel, elPeriodSelect, elVarSelect, elLegend, elLoading;
+  let elMap, elPopover, elSidePanel, elPeriodSelect, elVarSelect, elLegend, elLoading, elAnnouncer;
   let elAboutBtn, elAboutPanel, elAboutCloseBtn;
   let elOrgsBtn, elOrgsPanel, elOrgsCloseBtn;
+
+  function announce(msg) {
+    if (elAnnouncer) elAnnouncer.textContent = msg;
+  }
 
   async function init() {
     elMap = document.getElementById('uhi-map');
@@ -118,45 +150,45 @@
     elVarSelect = document.getElementById('uhi-var-select');
     elLegend = document.getElementById('uhi-legend');
     elLoading = document.getElementById('uhi-loading');
+    elAnnouncer = document.getElementById('uhi-status-announcer');
+
     elAboutBtn = document.getElementById('uhi-about-btn');
     elAboutPanel = document.getElementById('uhi-about-panel');
     elAboutCloseBtn = document.getElementById('uhi-about-close-btn');
+
     elOrgsBtn = document.getElementById('uhi-orgs-btn');
     elOrgsPanel = document.getElementById('uhi-orgs-panel');
     elOrgsCloseBtn = document.getElementById('uhi-orgs-close-btn');
 
-    // Setup close button on side panel
+    // Close button for details panel
     document.getElementById('uhi-close-btn').addEventListener('click', () => {
       closeSidePanel();
+      announce('Details panel closed.');
     });
 
-    // Setup about campaign toggle & close buttons
+    // About Campaign toggle & close
     if (elAboutBtn) {
-      elAboutBtn.addEventListener('click', () => {
-        toggleAboutPanel();
-      });
+      elAboutBtn.addEventListener('click', toggleAboutPanel);
     }
-
     if (elAboutCloseBtn) {
       elAboutCloseBtn.addEventListener('click', () => {
         closeAboutPanel();
+        announce('Campaign overview closed.');
       });
     }
 
-    // Setup about organizations toggle & close buttons
+    // About Organizations toggle & close
     if (elOrgsBtn) {
-      elOrgsBtn.addEventListener('click', () => {
-        toggleOrgsPanel();
-      });
+      elOrgsBtn.addEventListener('click', toggleOrgsPanel);
     }
-
     if (elOrgsCloseBtn) {
       elOrgsCloseBtn.addEventListener('click', () => {
         closeOrgsPanel();
+        announce('Organizations panel closed.');
       });
     }
 
-    // Keyboard shortcut (Escape closes open panels)
+    // Escape key listener
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeAboutPanel();
@@ -165,7 +197,7 @@
       }
     });
 
-    // Setup event listeners on controls
+    // Select change listeners
     elPeriodSelect.addEventListener('change', (e) => {
       const val = e.target.value;
       state.currentPeriod = val;
@@ -181,6 +213,7 @@
       if (state.selectedCellIndex !== null) {
         updateSidePanel(state.selectedCellIndex);
       }
+      announce(`Time period changed to ${elPeriodSelect.options[elPeriodSelect.selectedIndex].text}`);
     });
 
     elVarSelect.addEventListener('change', (e) => {
@@ -195,50 +228,56 @@
       }
       renderActiveLayer();
       updateLegend();
+      announce(`Data layer changed to ${elVarSelect.options[elVarSelect.selectedIndex].text}`);
     });
 
-    // Offscreen Canvas for instant projection rendering
+    // Offscreen Canvas
     state.canvas = document.createElement('canvas');
     state.canvas.width = state.canvasWidth;
     state.canvas.height = state.canvasHeight;
     state.ctx = state.canvas.getContext('2d', { willReadFrequently: true });
 
     // Load Data
-    await loadData();
+    try {
+      await loadAssets();
+    } catch (err) {
+      console.error('Initialization error:', err);
+      return;
+    }
 
-    // Initialize Map
+    // Initialize Map with 100% Open, Free Light Basemap
     initMap();
 
-    // Render Initial Map Layer
     renderActiveLayer();
     updateLegend();
 
-    // Hide Loading Screen
     if (elLoading) {
       elLoading.style.opacity = '0';
       setTimeout(() => { elLoading.style.display = 'none'; }, 300);
     }
+    announce('Map and microclimate data ready.');
   }
 
-  async function loadData() {
-    const basePath = 'data/';
+  async function loadAssets() {
     try {
-      const [manifestRes, mercatorRes, gridRes, countiesRes] = await Promise.all([
-        fetch(basePath + 'manifest.json').then(r => r.json()),
-        fetch(basePath + 'mercator_map.bin').then(r => r.arrayBuffer()),
-        fetch(basePath + 'grid_data.bin').then(r => r.arrayBuffer()),
-        fetch(basePath + 'counties.geojson').then(r => r.json())
+      const [manifestRes, countiesRes, mercRes, gridRes] = await Promise.all([
+        fetch('data/manifest.json').then(r => r.json()),
+        fetch('data/counties.geojson').then(r => r.json()).catch(() => null),
+        fetch('data/mercator_map.bin').then(r => r.arrayBuffer()),
+        fetch('data/grid_data.bin').then(r => r.arrayBuffer())
       ]);
 
       state.manifest = manifestRes;
-      state.mercatorMap = new Int32Array(mercatorRes);
       state.countiesGeoJSON = countiesRes;
+      state.mercatorMap = new Int32Array(mercRes);
 
-      // Extract typed arrays from packed grid_data.bin using manifest offsets
       const totalCells = state.manifest.grid.total_cells;
       const off = state.manifest.offsets;
 
       state.gridData.inside = new Uint8Array(gridRes, off.inside, totalCells);
+      state.gridData.canopy = new Uint8Array(gridRes, off.canopy, totalCells);
+      state.gridData.pers = new Uint8Array(gridRes, off.pers, totalCells);
+
       state.gridData.temp_am = new Int16Array(gridRes, off.temp_am, totalCells);
       state.gridData.temp_af = new Int16Array(gridRes, off.temp_af, totalCells);
       state.gridData.temp_pm = new Int16Array(gridRes, off.temp_pm, totalCells);
@@ -247,13 +286,9 @@
       state.gridData.anom_af = new Int16Array(gridRes, off.anom_af, totalCells);
       state.gridData.anom_pm = new Int16Array(gridRes, off.anom_pm, totalCells);
 
-      state.gridData.canopy = new Uint8Array(gridRes, off.canopy, totalCells);
-
       state.gridData.spot_am = new Uint8Array(gridRes, off.spot_am, totalCells);
       state.gridData.spot_af = new Uint8Array(gridRes, off.spot_af, totalCells);
       state.gridData.spot_pm = new Uint8Array(gridRes, off.spot_pm, totalCells);
-
-      state.gridData.pers = new Uint8Array(gridRes, off.pers, totalCells);
 
       state.gridData.z_am = new Int8Array(gridRes, off.z_am, totalCells);
       state.gridData.z_af = new Int8Array(gridRes, off.z_af, totalCells);
@@ -261,7 +296,7 @@
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
       if (elLoading) {
-        elLoading.innerHTML = `<div style="color:#E74C3C; font-weight:700;">Failed to load data assets. Please ensure static files are present in web_dashboard/data/</div>`;
+        elLoading.innerHTML = `<div style="color:#34495E; font-weight:800; padding:20px; text-align:center;">Failed to load data assets. Please ensure static files are present in web_dashboard/data/</div>`;
       }
       throw err;
     }
@@ -278,25 +313,49 @@
       attributionControl: true
     });
 
-    // Zoom control at bottom right to stay clean
     L.control.zoom({ position: 'bottomright' }).addTo(state.map);
 
-    // OpenStreetMap standard open basemap tiles
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // 1. Primary White / Light Grayscale Basemap (OpenStreetMap Grayscale via CSS)
+    // 100% Free, NO API KEY NEEDED, full zoom levels up to 19, street-level detail
+    const osmLight = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      className: 'uhi-tiles-light',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+    });
+
+    // 2. Esri World Gray Canvas (Minimalist Muted Cartography)
+    // 100% Free, NO API KEY NEEDED
+    const esriGray = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 16,
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+    });
+
+    // 3. OpenStreetMap Standard (Full Color)
+    const osmColor = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
-    }).addTo(state.map);
+    });
+
+    // Default to clean Light Grayscale OSM
+    osmLight.addTo(state.map);
+
+    const baseMaps = {
+      "Light Street (Grayscale OSM)": osmLight,
+      "Gray Canvas (Esri Minimal)": esriGray,
+      "OpenStreetMap (Color)": osmColor
+    };
+    L.control.layers(baseMaps, null, { position: 'topright' }).addTo(state.map);
 
     // County boundary overlay
     if (state.countiesGeoJSON) {
       state.countiesLayer = L.geoJSON(state.countiesGeoJSON, {
         style: {
-          color: '#4B5563',
-          weight: 1.2,
-          opacity: 0.65,
+          color: '#34495E',
+          weight: 1.6,
+          opacity: 0.70,
           fillColor: 'transparent',
           fillOpacity: 0,
-          dashArray: '3, 4'
+          dashArray: '4, 4'
         },
         interactive: false
       }).addTo(state.map);
@@ -305,11 +364,10 @@
     // Grid ImageOverlay
     const overlayBounds = state.manifest.mercator.overlay_bounds;
     state.overlayLayer = L.imageOverlay('', overlayBounds, {
-      opacity: 0.88,
+      opacity: 0.90,
       interactive: false
     }).addTo(state.map);
 
-    // Mouse movement interaction (Hover Popover)
     const container = document.querySelector('.uhi-main-area') || document.querySelector('.uhi-container');
     state.map.on('mousemove', (e) => {
       handleMapMouseMove(e, container);
@@ -320,12 +378,10 @@
       elMap.style.cursor = '';
     });
 
-    // Map Click Interaction (Side Detail Panel)
     state.map.on('click', (e) => {
       handleMapClick(e);
     });
 
-    // Ensure Leaflet dimensions stay synchronized with layout
     window.addEventListener('resize', () => {
       if (state.map) state.map.invalidateSize();
     });
@@ -379,22 +435,20 @@
     const tAf = vAf !== null ? vAf.toFixed(1) + '°F' : '—';
     const tPm = vPm !== null ? vPm.toFixed(1) + '°F' : '—';
 
-    // Scale temperatures across realistic range (65°F to 105°F) for visible mini-bar comparison
     function tempToBarPct(val) {
       if (val === null) return 0;
       return Math.max(10, Math.min(100, Math.round(((val - 65.0) / 40.0) * 100)));
     }
 
-    // Position popover safely inside container
     const pt = state.map.latLngToContainerPoint(e.latlng);
-    let left = pt.x + 16;
-    let top = pt.y + 16;
+    let left = pt.x + 18;
+    let top = pt.y + 18;
     const rect = container.getBoundingClientRect();
-    if (left + 280 > rect.width) {
-      left = pt.x - 290;
+    if (left + 310 > rect.width) {
+      left = pt.x - 315;
     }
-    if (top + 170 > rect.height) {
-      top = pt.y - 160;
+    if (top + 180 > rect.height) {
+      top = pt.y - 175;
     }
 
     elPopover.style.left = left + 'px';
@@ -405,6 +459,7 @@
     document.getElementById('uhi-pop-af').textContent = tAf;
     document.getElementById('uhi-pop-pm').textContent = tPm;
 
+    // Mini bar charts in #E74C3C
     document.getElementById('uhi-pop-bar-am').style.width = tempToBarPct(vAm) + '%';
     document.getElementById('uhi-pop-bar-af').style.width = tempToBarPct(vAf) + '%';
     document.getElementById('uhi-pop-bar-pm').style.width = tempToBarPct(vPm) + '%';
@@ -412,9 +467,7 @@
 
   function handleMapClick(e) {
     const cell = getCellAtLatLng(e.latlng.lat, e.latlng.lng);
-    if (!cell) {
-      return;
-    }
+    if (!cell) return;
 
     state.selectedCellIndex = cell.cellIdx;
     highlightCell(cell.row, cell.col);
@@ -449,10 +502,10 @@
     ];
 
     state.highlightLayer = L.polygon(latlngs, {
-      color: '#1F2937',
-      weight: 2.5,
-      fillColor: '#1F2937',
-      fillOpacity: 0.25,
+      color: '#34495E',
+      weight: 2.8,
+      fillColor: '#34495E',
+      fillOpacity: 0.20,
       interactive: false
     }).addTo(state.map);
   }
@@ -480,8 +533,10 @@
         elAboutBtn.classList.add('active');
         elAboutBtn.setAttribute('aria-expanded', 'true');
       }
+      announce('Campaign overview opened.');
     } else {
       closeAboutPanel();
+      announce('Campaign overview closed.');
     }
   }
 
@@ -514,8 +569,10 @@
         elOrgsBtn.classList.add('active');
         elOrgsBtn.setAttribute('aria-expanded', 'true');
       }
+      announce('Organizations panel opened.');
     } else {
       closeOrgsPanel();
+      announce('Organizations panel closed.');
     }
   }
 
@@ -538,21 +595,23 @@
     }
   }
 
+  // Update Data Summary on Click
   function updateSidePanel(idx) {
     const stats = state.manifest.stats;
     const labels = state.manifest.labels;
-    const colors = state.manifest.colors;
 
     // 1. Tree Canopy Cover
     const canopyVal = state.gridData.canopy[idx];
     const canopyText = canopyVal === 255 ? 'No Data' : canopyVal + '%';
     document.getElementById('uhi-panel-canopy').textContent = canopyText;
     const canopyBar = document.getElementById('uhi-canopy-fill');
+    const canopyProgress = document.getElementById('uhi-canopy-progress');
     if (canopyVal <= 100) {
       canopyBar.style.width = canopyVal + '%';
-      canopyBar.style.background = '#15803D';
+      if (canopyProgress) canopyProgress.setAttribute('aria-valuenow', canopyVal);
     } else {
       canopyBar.style.width = '0%';
+      if (canopyProgress) canopyProgress.setAttribute('aria-valuenow', 0);
     }
 
     const meanCanopy = stats.canopy.mean;
@@ -562,15 +621,10 @@
       : '';
     document.getElementById('uhi-panel-canopy-sub').textContent = diffText;
 
-    // 2. Hot / Cold Spot Persistence
+    // 2. Diurnal Persistence Level
     const persVal = state.gridData.pers[idx];
     const persLabel = (persVal >= 0 && persVal < labels.persistence.length) ? labels.persistence[persVal] : 'Unknown';
-    const persColorRgb = colors.persistence[persVal.toString()] || [127, 140, 141];
-    const persColorHex = `rgb(${persColorRgb[0]}, ${persColorRgb[1]}, ${persColorRgb[2]})`;
-
-    const badgeEl = document.getElementById('uhi-panel-pers');
-    badgeEl.textContent = persLabel;
-    badgeEl.style.color = (persVal === 0 || persVal === 1) ? '#1F2937' : persColorHex;
+    document.getElementById('uhi-panel-pers').textContent = persLabel;
 
     const persSubEl = document.getElementById('uhi-panel-pers-sub');
     if (persVal === 4) persSubEl.textContent = 'All-day thermal refuge: significantly cooler in morning, afternoon, and evening.';
@@ -582,15 +636,14 @@
 
     // 3. Diurnal Temperatures & Anomalies
     function formatPeriod(tempRaw, anomRaw, spotVal) {
-      if (tempRaw === -32768) return { temp: '—', anom: '—', badge: '' };
+      if (tempRaw === -32768) return { temp: '—', anom: '—', badge: '—' };
       const tempF = (tempRaw / 10.0).toFixed(1) + '°F';
       const anomF = (anomRaw / 100.0);
       const anomStr = (anomF >= 0 ? `+${anomF.toFixed(1)}°F` : `${anomF.toFixed(1)}°F`);
-      let badge = 'Neutral';
-      let badgeColor = '#7F8C8D';
-      if (spotVal === 1) { badge = 'Cold Spot'; badgeColor = '#2980B9'; }
-      if (spotVal === 2) { badge = 'Hot Spot'; badgeColor = '#E74C3C'; }
-      return { temp: tempF, anom: anomStr, badge, badgeColor };
+      let badge = 'Baseline';
+      if (spotVal === 1) badge = 'Cold Spot';
+      if (spotVal === 2) badge = 'Hot Spot';
+      return { temp: tempF, anom: anomStr, badge };
     }
 
     const dAm = formatPeriod(state.gridData.temp_am[idx], state.gridData.anom_am[idx], state.gridData.spot_am[idx]);
@@ -600,20 +653,19 @@
     document.getElementById('uhi-d-am-val').textContent = dAm.temp;
     document.getElementById('uhi-d-am-anom').textContent = dAm.anom;
     document.getElementById('uhi-d-am-tag').textContent = dAm.badge;
-    document.getElementById('uhi-d-am-tag').style.color = dAm.badgeColor;
 
     document.getElementById('uhi-d-af-val').textContent = dAf.temp;
     document.getElementById('uhi-d-af-anom').textContent = dAf.anom;
     document.getElementById('uhi-d-af-tag').textContent = dAf.badge;
-    document.getElementById('uhi-d-af-tag').style.color = dAf.badgeColor;
 
     document.getElementById('uhi-d-pm-val').textContent = dPm.temp;
     document.getElementById('uhi-d-pm-anom').textContent = dPm.anom;
     document.getElementById('uhi-d-pm-tag').textContent = dPm.badge;
-    document.getElementById('uhi-d-pm-tag').style.color = dPm.badgeColor;
+
+    announce(`Cell selected: Tree canopy ${canopyText}, Afternoon ${dAf.temp}, Anomaly ${dAf.anom}.`);
   }
 
-  // Map Layer Canvas Renderer
+  // Canvas Layer Rendering (Segmented Colormaps)
   function renderActiveLayer() {
     const w = state.canvasWidth;
     const h = state.canvasHeight;
@@ -624,17 +676,15 @@
 
     const period = state.currentPeriod === 'diurnal' ? 'af' : state.currentPeriod;
     const activeVar = state.currentVar;
-
-    const colors = state.manifest.colors;
     const stats = state.manifest.stats;
 
-    // Prepare active array and color mapping function
+    // 1. Temperature: 7 Segments (Reds)
     if (activeVar === 'temp') {
       const arr = state.gridData[`temp_${period}`];
       const pStat = stats[`temp_${period}`];
       const minVal = pStat.p2;
       const maxVal = pStat.p98;
-      const lut = colors.temp_lut;
+      const lut = REDS_7; // 7 segments
 
       for (let p = 0; p < totalPixels; p++) {
         const gIdx = mercMap[p];
@@ -650,18 +700,20 @@
         const val = raw / 10.0;
         let norm = (val - minVal) / (maxVal - minVal);
         if (norm < 0) norm = 0;
-        else if (norm > 1) norm = 1;
-        const lutIdx = Math.floor(norm * 255);
-        const rgb = lut[lutIdx];
+        else if (norm >= 1) norm = 0.9999;
+        const segIdx = Math.floor(norm * 7); // 0..6
+        const rgb = lut[segIdx];
         data[p * 4] = rgb[0];
         data[p * 4 + 1] = rgb[1];
         data[p * 4 + 2] = rgb[2];
-        data[p * 4 + 3] = 230;
+        data[p * 4 + 3] = 235;
       }
-    } else if (activeVar === 'anom') {
+    }
+    // 2. Anomaly: 7 Segments (coolwarm)
+    else if (activeVar === 'anom') {
       const arr = state.gridData[`anom_${period}`];
       const limit = stats.anom.limit; // 6.0 deg F
-      const lut = colors.anom_lut;
+      const lut = COOLWARM_7; // 7 segments
 
       for (let p = 0; p < totalPixels; p++) {
         const gIdx = mercMap[p];
@@ -677,17 +729,44 @@
         const val = raw / 100.0;
         let norm = (val + limit) / (2 * limit);
         if (norm < 0) norm = 0;
-        else if (norm > 1) norm = 1;
-        const lutIdx = Math.floor(norm * 255);
-        const rgb = lut[lutIdx];
+        else if (norm >= 1) norm = 0.9999;
+        const segIdx = Math.floor(norm * 7); // 0..6
+        const rgb = lut[segIdx];
         data[p * 4] = rgb[0];
         data[p * 4 + 1] = rgb[1];
         data[p * 4 + 2] = rgb[2];
-        data[p * 4 + 3] = 230;
+        data[p * 4 + 3] = 235;
       }
-    } else if (activeVar === 'spot') {
+    }
+    // 3. Tree Canopy Cover: Quintiles (5 Segments)
+    else if (activeVar === 'canopy') {
+      const arr = state.gridData.canopy;
+      const lut = YLGN_5; // 5 quintile segments (0-20, 20-40, 40-60, 60-80, 80-100%)
+
+      for (let p = 0; p < totalPixels; p++) {
+        const gIdx = mercMap[p];
+        if (gIdx < 0) {
+          data[p * 4 + 3] = 0;
+          continue;
+        }
+        const raw = arr[gIdx];
+        if (raw === 255) {
+          data[p * 4 + 3] = 0;
+          continue;
+        }
+        let qIdx = Math.floor(raw / 20.0);
+        if (qIdx > 4) qIdx = 4;
+        const rgb = lut[qIdx];
+        data[p * 4] = rgb[0];
+        data[p * 4 + 1] = rgb[1];
+        data[p * 4 + 2] = rgb[2];
+        data[p * 4 + 3] = 235;
+      }
+    }
+    // 4. Hot and Cold Spots
+    else if (activeVar === 'spot') {
       const arr = state.gridData[`spot_${period}`];
-      const spotColors = colors.spots;
+      const spotColors = ACCESSIBLE_SPOTS;
 
       for (let p = 0; p < totalPixels; p++) {
         const gIdx = mercMap[p];
@@ -696,19 +775,17 @@
           continue;
         }
         const sVal = arr[gIdx];
-        if (sVal === 255) {
-          data[p * 4 + 3] = 0;
-          continue;
-        }
-        const rgb = spotColors[sVal.toString()] || [229, 231, 235];
+        const rgb = spotColors[sVal.toString()] || [226, 232, 240];
         data[p * 4] = rgb[0];
         data[p * 4 + 1] = rgb[1];
         data[p * 4 + 2] = rgb[2];
-        data[p * 4 + 3] = sVal === 0 ? 90 : 235; // subtle for not-sig
+        data[p * 4 + 3] = sVal === 0 ? 80 : 240;
       }
-    } else if (activeVar === 'pers') {
+    }
+    // 5. Diurnal Persistence
+    else if (activeVar === 'pers') {
       const arr = state.gridData.pers;
-      const persColors = colors.persistence;
+      const persColors = ACCESSIBLE_PERSISTENCE;
 
       for (let p = 0; p < totalPixels; p++) {
         const gIdx = mercMap[p];
@@ -717,38 +794,11 @@
           continue;
         }
         const pVal = arr[gIdx];
-        if (pVal === 255) {
-          data[p * 4 + 3] = 0;
-          continue;
-        }
-        const rgb = persColors[pVal.toString()] || [229, 231, 235];
+        const rgb = persColors[pVal.toString()] || [226, 232, 240];
         data[p * 4] = rgb[0];
         data[p * 4 + 1] = rgb[1];
         data[p * 4 + 2] = rgb[2];
-        data[p * 4 + 3] = pVal === 0 ? 80 : 235;
-      }
-    } else if (activeVar === 'canopy') {
-      const arr = state.gridData.canopy;
-      const lut = colors.canopy_lut;
-
-      for (let p = 0; p < totalPixels; p++) {
-        const gIdx = mercMap[p];
-        if (gIdx < 0) {
-          data[p * 4 + 3] = 0;
-          continue;
-        }
-        const cVal = arr[gIdx];
-        if (cVal === 255) {
-          data[p * 4 + 3] = 0;
-          continue;
-        }
-        const norm = cVal / 100.0;
-        const lutIdx = Math.floor(norm * 255);
-        const rgb = lut[lutIdx];
-        data[p * 4] = rgb[0];
-        data[p * 4 + 1] = rgb[1];
-        data[p * 4 + 2] = rgb[2];
-        data[p * 4 + 3] = 230;
+        data[p * 4 + 3] = pVal === 0 ? 70 : 240;
       }
     }
 
@@ -757,6 +807,7 @@
     state.overlayLayer.setUrl(dataUrl);
   }
 
+  // Map Legend (Segmented)
   function updateLegend() {
     const activeVar = state.currentVar;
     const period = state.currentPeriod === 'diurnal' ? 'af' : state.currentPeriod;
@@ -768,8 +819,8 @@
       const pStat = stats[`temp_${period}`];
       const periodLabel = period === 'am' ? 'Morning' : (period === 'af' ? 'Afternoon' : 'Evening');
       html = `
-        <div class="uhi-legend-title">${periodLabel} Air Temperature (°F)</div>
-        <div class="uhi-legend-bar" style="background: linear-gradient(to right, #ffffb2, #fed976, #feb24c, #fd8d3c, #f03b20, #bd0026);"></div>
+        <div class="uhi-legend-title">${periodLabel} Air Temperature (°F) &bull; 7 Segments</div>
+        <div class="uhi-legend-bar" style="background: linear-gradient(to right, ${REDS_STEP_GRADIENT});"></div>
         <div class="uhi-legend-scale">
           <span>${pStat.p2.toFixed(1)}°F</span>
           <span>Mean ${pStat.mean.toFixed(1)}°F</span>
@@ -778,28 +829,43 @@
       `;
     } else if (activeVar === 'anom') {
       html = `
-        <div class="uhi-legend-title">Temperature Anomaly vs Regional Mean</div>
-        <div class="uhi-legend-bar" style="background: linear-gradient(to right, #2b83ba, #abdda4, #ffffbf, #fdae61, #d7191c);"></div>
+        <div class="uhi-legend-title">Temperature Anomaly (°F) &bull; 7 Segments</div>
+        <div class="uhi-legend-bar" style="background: linear-gradient(to right, ${COOLWARM_STEP_GRADIENT});"></div>
         <div class="uhi-legend-scale">
-          <span>-6.0°F (Cooler)</span>
+          <span>-6.0°F</span>
+          <span>-2.6°F</span>
           <span>0.0°F</span>
-          <span>+6.0°F (Warmer)</span>
+          <span>+2.6°F</span>
+          <span>+6.0°F</span>
+        </div>
+      `;
+    } else if (activeVar === 'canopy') {
+      html = `
+        <div class="uhi-legend-title">Tree Canopy Cover &bull; Quintiles (5 Segments)</div>
+        <div class="uhi-legend-bar" style="background: linear-gradient(to right, ${YLGN_STEP_GRADIENT});"></div>
+        <div class="uhi-legend-scale">
+          <span>0%</span>
+          <span>20%</span>
+          <span>40%</span>
+          <span>60%</span>
+          <span>80%</span>
+          <span>100%</span>
         </div>
       `;
     } else if (activeVar === 'spot') {
       html = `
-        <div class="uhi-legend-title">Temperature Hot and Cold Spots</div>
+        <div class="uhi-legend-title">Temperature Hot &amp; Cold Spots</div>
         <div class="uhi-legend-items">
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #E74C3C;"></span>
+            <span class="uhi-legend-box" style="background: #B91C1C;"></span>
             <span>Hot Spot (Significant Heat Cluster)</span>
           </div>
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #2980B9;"></span>
+            <span class="uhi-legend-box" style="background: #1E40AF;"></span>
             <span>Cold Spot (Significant Cool Refuge)</span>
           </div>
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #E5E7EB; border: 1px solid #CBD5E1;"></span>
+            <span class="uhi-legend-box" style="background: #E2E8F0;"></span>
             <span>Not Significant (Baseline)</span>
           </div>
         </div>
@@ -809,43 +875,37 @@
         <div class="uhi-legend-title">Hot / Cold Spot Persistence</div>
         <div class="uhi-legend-items">
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #E74C3C;"></span>
-            <span>Hot Spot — All 3 Periods (Severe Island)</span>
+            <span class="uhi-legend-box" style="background: #B91C1C;"></span>
+            <span>Hot Spot &mdash; All 3 Periods</span>
           </div>
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #F1948A;"></span>
-            <span>Hot Spot — 2 Periods</span>
+            <span class="uhi-legend-box" style="background: #EF4444;"></span>
+            <span>Hot Spot &mdash; 2 Periods</span>
           </div>
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #FADBD8;"></span>
-            <span>Hot Spot — 1 Period</span>
+            <span class="uhi-legend-box" style="background: #FCA5A5;"></span>
+            <span>Hot Spot &mdash; 1 Period</span>
           </div>
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #2980B9;"></span>
-            <span>Cold Spot — All 3 Periods (Refuge)</span>
+            <span class="uhi-legend-box" style="background: #1E40AF;"></span>
+            <span>Cold Spot &mdash; All 3 Periods</span>
           </div>
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #85C1E9;"></span>
-            <span>Cold Spot — 2 Periods</span>
+            <span class="uhi-legend-box" style="background: #3B82F6;"></span>
+            <span>Cold Spot &mdash; 2 Periods</span>
           </div>
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #CBD5E1;"></span>
-            <span>Mixed Shift (Warm & Cool)</span>
+            <span class="uhi-legend-box" style="background: #93C5FD;"></span>
+            <span>Cold Spot &mdash; 1 Period</span>
           </div>
           <div class="uhi-legend-item">
-            <span class="uhi-legend-box" style="background: #E5E7EB; border: 1px solid #CBD5E1;"></span>
+            <span class="uhi-legend-box" style="background: #94A3B8;"></span>
+            <span>Mixed Shift</span>
+          </div>
+          <div class="uhi-legend-item">
+            <span class="uhi-legend-box" style="background: #E2E8F0;"></span>
             <span>Not Significant</span>
           </div>
-        </div>
-      `;
-    } else if (activeVar === 'canopy') {
-      html = `
-        <div class="uhi-legend-title">Tree Canopy Cover Percentage</div>
-        <div class="uhi-legend-bar" style="background: linear-gradient(to right, #ffffe5, #d9f0a3, #78c679, #238443, #004529);"></div>
-        <div class="uhi-legend-scale">
-          <span>0%</span>
-          <span>50%</span>
-          <span>100%</span>
         </div>
       `;
     }
@@ -853,11 +913,9 @@
     elLegend.innerHTML = html;
   }
 
-  // Self Initialization on DOM ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 })();
-

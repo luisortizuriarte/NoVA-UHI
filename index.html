@@ -5,58 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NOVA Urban Heat Island & Tree Canopy Dashboard</title>
   
-  <!-- Typography: Figtree (GEMINI.md standard) -->
+  <!-- Typography: Figtree -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   
-  <!-- Dashboard Styling -->
+  <!-- Accessible Dashboard Styling -->
   <link rel="stylesheet" href="css/uhi-dashboard.css">
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #f8fafc;
-      font-family: 'Figtree', sans-serif;
-    }
-  </style>
 </head>
 <body>
 
+  <!-- WCAG 2.4.1: Skip link -->
+  <a href="#uhi-map" class="uhi-skip-link">Skip to map view</a>
+
   <div class="uhi-container">
-    <!-- Dedicated Top Bar Element -->
-    <header class="uhi-topbar">
+    <!-- Accessible Top Bar -->
+    <header class="uhi-topbar" role="banner">
       <div class="uhi-topbar-brand">
         <h1 class="uhi-topbar-title">Northern Virginia Urban Heat Island Campaign</h1>
-        <p class="uhi-topbar-subtitle">Interactive Microclimate &amp; Tree Canopy Explorer</p>
+        <p class="uhi-topbar-subtitle">Accessible Microclimate &amp; Tree Canopy Explorer &bull; WCAG 2.1 Compliant</p>
       </div>
 
-      <div class="uhi-topbar-controls">
-        <!-- About Campaign Show/Hide Toggle Button -->
-        <button id="uhi-about-btn" class="uhi-btn-about" title="Show or hide campaign information" aria-expanded="false" aria-controls="uhi-about-panel">
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-          </svg>
-          <span>About Campaign</span>
-        </button>
-
-        <!-- About Organizations Show/Hide Toggle Button -->
-        <button id="uhi-orgs-btn" class="uhi-btn-about" title="Show or hide participating organizations" aria-expanded="false" aria-controls="uhi-orgs-panel">
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
-          </svg>
-          <span>About Us</span>
-        </button>
-
+      <div class="uhi-topbar-controls" role="region" aria-label="Dashboard controls">
+        <!-- Time of Day Selector -->
         <div class="uhi-control-group">
-          <label for="uhi-period-select">Time of Day</label>
-          <select id="uhi-period-select" class="uhi-select" aria-label="Select survey period">
+          <label for="uhi-period-select" id="lbl-period">Time of Day</label>
+          <select id="uhi-period-select" class="uhi-select" aria-labelledby="lbl-period">
             <option value="am">Morning (AM: 6:00 – 7:00 AM)</option>
             <option value="af" selected>Afternoon (AF: 3:00 – 4:00 PM)</option>
             <option value="pm">Evening (PM: 7:00 – 8:00 PM)</option>
@@ -64,124 +41,151 @@
           </select>
         </div>
 
+        <!-- Layer Selector -->
         <div class="uhi-control-group">
-          <label for="uhi-var-select">Layer</label>
-          <select id="uhi-var-select" class="uhi-select" aria-label="Select variable layer">
-            <option value="temp" selected>Air Temperature (°F)</option>
-            <option value="anom">Temperature Anomaly (°F)</option>
+          <label for="uhi-var-select" id="lbl-layer">Data Layer</label>
+          <select id="uhi-var-select" class="uhi-select" aria-labelledby="lbl-layer">
+            <option value="temp" selected>Air Temperature (°F) [7 Segments]</option>
+            <option value="anom">Temperature Anomaly (°F) [7 Segments]</option>
             <option value="spot">Temperature Hot &amp; Cold Spots</option>
             <option value="pers">Diurnal Persistence Level</option>
-            <option value="canopy">Tree Canopy Cover (%)</option>
+            <option value="canopy">Tree Canopy Cover (%) [Quintiles]</option>
           </select>
         </div>
       </div>
     </header>
 
     <!-- Main Map Area -->
-    <div class="uhi-main-area">
-      <!-- Map Container -->
-      <div id="uhi-map"></div>
+    <main class="uhi-main-area" role="main">
+      <!-- Live region for screen reader announcements -->
+      <div id="uhi-status-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-      <!-- Left About Campaign Pane -->
-      <aside id="uhi-about-panel" class="uhi-about-panel" aria-label="About the Campaign Panel">
+      <!-- Floating Action Buttons in Top Left of Map Frame -->
+      <div class="uhi-map-floating-controls" role="toolbar" aria-label="Map information panels">
+        <button id="uhi-about-btn" class="uhi-btn-floating" title="Show or hide campaign information" aria-expanded="false" aria-controls="uhi-about-panel">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="uhi-btn-icon">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+          <span>About Campaign</span>
+        </button>
+
+        <button id="uhi-orgs-btn" class="uhi-btn-floating" title="Show or hide participating organizations" aria-expanded="false" aria-controls="uhi-orgs-panel">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="uhi-btn-icon">
+            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+          </svg>
+          <span>About Us</span>
+        </button>
+      </div>
+
+      <!-- Map Container -->
+      <div id="uhi-map" role="region" aria-label="Interactive Northern Virginia microclimate map" tabindex="0"></div>
+
+      <!-- Left Slide-out: About Campaign -->
+      <aside id="uhi-about-panel" class="uhi-slide-panel" aria-label="About the Campaign Panel" role="region">
         <div class="uhi-panel-header">
-          <div class="uhi-panel-title">About the Campaign</div>
+          <h2 class="uhi-panel-title">About the Campaign</h2>
           <button id="uhi-about-close-btn" class="uhi-close-btn" title="Close About Panel" aria-label="Close about panel">&times;</button>
         </div>
 
-        <div class="uhi-about-content">
-          <div class="uhi-about-badge">Citizen Science • July 16, 2026</div>
+        <div class="uhi-panel-body">
+          <div class="uhi-badge">Citizen Science &bull; July 16, 2026</div>
 
-          <p class="uhi-about-lead">
+          <p class="uhi-lead">
             The <strong>Summer 2026 Northern Virginia Urban Heat Island Mapping Campaign</strong> was a citizen-science initiative launched to identify hyper-local temperature disparities across <strong>Fairfax County</strong>, <strong>Arlington County</strong>, and the <strong>City of Alexandria</strong>.
           </p>
 
-          <div class="uhi-card uhi-partners-card">
-            <div class="uhi-card-label">Organizing Partnership</div>
-            <p style="margin: 4px 0 0 0; font-size: 12.5px; line-height: 1.45; color: var(--uhi-text-dark);">
+          <div class="uhi-callout">
+            <div class="uhi-callout-label">Organizing Partnership</div>
+            <p class="uhi-callout-text">
               Conducted during one of the season's hottest stretches through a partnership between <strong>George Mason University’s Virginia Climate Center (VCC)</strong> and regional nonprofit <strong>Faith Alliance for Climate Solutions (FACS)</strong>.
             </p>
           </div>
 
-          <!-- Key Metrics Grid -->
-          <div class="uhi-stats-grid">
-            <div class="uhi-stat-box">
-              <span class="uhi-stat-number">80+</span>
-              <span class="uhi-stat-desc">Volunteers</span>
+          <!-- Key Metrics Band (Frameless) -->
+          <div class="uhi-stats-band" role="group" aria-label="Campaign key figures">
+            <div class="uhi-stat-col">
+              <span class="uhi-stat-val">80+</span>
+              <span class="uhi-stat-lbl">Volunteers</span>
             </div>
-            <div class="uhi-stat-box">
-              <span class="uhi-stat-number">30</span>
-              <span class="uhi-stat-desc">Routes</span>
+            <div class="uhi-stat-col">
+              <span class="uhi-stat-val">30</span>
+              <span class="uhi-stat-lbl">Routes</span>
             </div>
-            <div class="uhi-stat-box">
-              <span class="uhi-stat-number">3</span>
-              <span class="uhi-stat-desc">Snapshots</span>
+            <div class="uhi-stat-col">
+              <span class="uhi-stat-val">3</span>
+              <span class="uhi-stat-lbl">Snapshots</span>
             </div>
           </div>
 
-          <h3 class="uhi-about-heading">About the Measurements</h3>
-          <p class="uhi-about-text">
-            More than 80 volunteers organized into over 30 teams, mounting portable thermal and humidity sensors to vehicle roofs. Teams drove 30 pre-selected routes across urban corridors, commercial strips, and residential neighborhoods during three coordinated intervals (morning, afternoon, and evening) to track how heat built up and lingered throughout the day.
-          </p>
-          <p class="uhi-about-text">
-            The study specifically targeted neighborhoods with dense asphalt and low tree canopy coverage. Organizers emphasized identifying vulnerable communities, such as residents facing high energy burdens or outdoor workers at heightened risk of heat-related illness.
-          </p>
+          <div class="uhi-section">
+            <h3 class="uhi-heading">About the Measurements</h3>
+            <p class="uhi-text">
+              More than 80 volunteers organized into over 30 teams, mounting portable thermal and humidity sensors to vehicle roofs. Teams drove 30 pre-selected routes across urban corridors, commercial strips, and residential neighborhoods during three coordinated intervals (morning, afternoon, and evening) to track how heat built up and lingered throughout the day.
+            </p>
+            <p class="uhi-text">
+              The study specifically targeted neighborhoods with dense asphalt and low tree canopy coverage. Organizers emphasized identifying vulnerable communities, such as residents facing high energy burdens or outdoor workers at heightened risk of heat-related illness.
+            </p>
+          </div>
 
-          <h3 class="uhi-about-heading">What You Are Seeing Here</h3>
-          <p class="uhi-about-text">
-            Researchers at the <strong>Virginia Climate Center</strong> and <strong>Virginia State Climate Office</strong> processed the mobile measurements through machine learning combined with satellite imagery to produce the continuous 100-meter surface maps shown here.
-          </p>
-          <p class="uhi-about-text">
-            The maps show a spatial snapshot of temperatures on July 16, 2026, highlighting the region's hot spots, cooling tree canopy refuges, and their relationship to surrounding built environments.
-          </p>
+          <div class="uhi-section">
+            <h3 class="uhi-heading">What You Are Seeing Here</h3>
+            <p class="uhi-text">
+              Researchers at the <strong>Virginia Climate Center</strong> and <strong>Virginia State Climate Office</strong> processed the mobile measurements through machine learning combined with satellite imagery to produce the continuous 100-meter surface maps shown here.
+            </p>
+            <p class="uhi-text">
+              The maps show a spatial snapshot of temperatures on July 16, 2026, highlighting the region's hot spots, cooling tree canopy refuges, and their relationship to surrounding built environments.
+            </p>
+          </div>
 
-          <h3 class="uhi-about-heading">Learn More</h3>
-          <p class="uhi-about-text">
-            Want to learn more about our campaign? Read our full report:
-          </p>
-          <div class="uhi-report-box">
-            <span class="uhi-report-badge">Full Campaign Report</span>
-            <span class="uhi-report-desc">Coming soon</span>
+          <div class="uhi-section uhi-section-last">
+            <h3 class="uhi-heading">Learn More</h3>
+            <p class="uhi-text">
+              Want to learn more about our campaign? Read our full report:
+            </p>
+            <div class="uhi-report-banner">
+              <span class="uhi-report-title">Full Campaign Report</span>
+              <span class="uhi-report-sub">Coming soon</span>
+            </div>
           </div>
         </div>
       </aside>
 
-      <!-- Left About Organizations Pane -->
-      <aside id="uhi-orgs-panel" class="uhi-orgs-panel" aria-label="About Our Organizations Panel">
+      <!-- Left Slide-out: About Our Organizations -->
+      <aside id="uhi-orgs-panel" class="uhi-slide-panel" aria-label="About Our Organizations Panel" role="region">
         <div class="uhi-panel-header">
-          <div class="uhi-panel-title">Our Organizations</div>
+          <h2 class="uhi-panel-title">Our Organizations</h2>
           <button id="uhi-orgs-close-btn" class="uhi-close-btn" title="Close Organizations Panel" aria-label="Close organizations panel">&times;</button>
         </div>
 
-        <div class="uhi-about-content">
+        <div class="uhi-panel-body">
           <!-- Virginia State Climate Office -->
-          <div class="uhi-card" style="margin-bottom: 4px;">
-            <div class="uhi-card-label" style="color: var(--uhi-color-am);">State Climate Office &amp; University Partner</div>
-            <h3 class="uhi-org-title">Virginia State Climate Office</h3>
-            <p class="uhi-about-text" style="margin-top: 6px;">
+          <div class="uhi-org-block">
+            <div class="uhi-org-role">State Climate Office &amp; University Partner</div>
+            <h3 class="uhi-org-name">Virginia State Climate Office</h3>
+            <p class="uhi-text">
               The Virginia State Climate Office (VaSCO) serves to develop and deliver vital and timely weather and climate information to all Virginians. VaSCO is part of the <strong>Virginia Climate Center</strong> at <strong>George Mason University</strong>.
             </p>
-            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
-              <a href="https://www.vaclimate.gmu.edu/virginia-state-climate-office" target="_blank" rel="noopener noreferrer" class="uhi-link-btn">
-                <svg viewBox="0 0 20 20" fill="currentColor" style="width: 13px; height: 13px;"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+            <div class="uhi-org-actions">
+              <a href="https://www.vaclimate.gmu.edu/virginia-state-climate-office" target="_blank" rel="noopener noreferrer" class="uhi-action-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" class="uhi-action-icon" aria-hidden="true"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
                 <span>Visit VaSCO Website</span>
               </a>
-              <div class="uhi-sub-link">
+              <div class="uhi-sub-note">
                 Stay in the loop with the Virginia Climate Center Newsletter (link coming soon)
               </div>
             </div>
           </div>
 
           <!-- Faith Alliance for Climate Solutions -->
-          <div class="uhi-card" style="margin-bottom: 0;">
-            <div class="uhi-card-label" style="color: #15803D;">Regional Nonprofit Partner</div>
-            <h3 class="uhi-org-title">Faith Alliance for Climate Solutions</h3>
-            <p class="uhi-about-text" style="margin-top: 6px;">
+          <div class="uhi-org-block uhi-org-block-last">
+            <div class="uhi-org-role">Regional Nonprofit Partner</div>
+            <h3 class="uhi-org-name">Faith Alliance for Climate Solutions</h3>
+            <p class="uhi-text">
               Faith Alliance for Climate Solutions (FACS) unites people of faith, and friends who share our values, to develop local solutions to the climate crisis. Faithful voices are valuable in the conversation on climate change, and faith-based action draws upon our deep well of love for each other and all living things. Their work is done in Northern Virginia and nearby jurisdictions.
             </p>
-            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
-              <a href="https://faithforclimate.org" target="_blank" rel="noopener noreferrer" class="uhi-link-btn uhi-link-btn-green">
-                <svg viewBox="0 0 20 20" fill="currentColor" style="width: 13px; height: 13px;"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+            <div class="uhi-org-actions">
+              <a href="https://faithforclimate.org" target="_blank" rel="noopener noreferrer" class="uhi-action-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" class="uhi-action-icon" aria-hidden="true"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
                 <span>Visit FACS Website</span>
               </a>
             </div>
@@ -189,113 +193,105 @@
         </div>
       </aside>
 
-      <!-- Hover Popover showing 3 diurnal temperatures with mini barchart -->
-      <div id="uhi-popover" class="uhi-popover">
+      <!-- Hover Popover (Temperature Bar Charts: #E74C3C) -->
+      <div id="uhi-popover" class="uhi-popover" role="tooltip" aria-hidden="true">
         <div class="uhi-popover-title">
           <span>Survey Cell (100m)</span>
-          <span style="font-weight:400; color:#7F8C8D;">Air Temp</span>
+          <span class="uhi-popover-tag">Air Temp</span>
         </div>
         <div class="uhi-popover-row">
-          <span class="uhi-popover-label">
-            <span class="uhi-dot" style="background:#2980B9;"></span>
-            AM
-          </span>
-          <div class="uhi-pop-bar-track">
-            <div id="uhi-pop-bar-am" class="uhi-pop-bar-fill" style="background:#2980B9;"></div>
+          <span class="uhi-popover-lbl">AM</span>
+          <div class="uhi-pop-track">
+            <div id="uhi-pop-bar-am" class="uhi-pop-fill"></div>
           </div>
-          <span id="uhi-pop-am" class="uhi-popover-val" style="color:#2980B9;">—</span>
+          <span id="uhi-pop-am" class="uhi-popover-num">—</span>
         </div>
         <div class="uhi-popover-row">
-          <span class="uhi-popover-label">
-            <span class="uhi-dot" style="background:#F39C12;"></span>
-            AF
-          </span>
-          <div class="uhi-pop-bar-track">
-            <div id="uhi-pop-bar-af" class="uhi-pop-bar-fill" style="background:#F39C12;"></div>
+          <span class="uhi-popover-lbl">AF</span>
+          <div class="uhi-pop-track">
+            <div id="uhi-pop-bar-af" class="uhi-pop-fill"></div>
           </div>
-          <span id="uhi-pop-af" class="uhi-popover-val" style="color:#F39C12;">—</span>
+          <span id="uhi-pop-af" class="uhi-popover-num">—</span>
         </div>
         <div class="uhi-popover-row">
-          <span class="uhi-popover-label">
-            <span class="uhi-dot" style="background:#E74C3C;"></span>
-            PM
-          </span>
-          <div class="uhi-pop-bar-track">
-            <div id="uhi-pop-bar-pm" class="uhi-pop-bar-fill" style="background:#E74C3C;"></div>
+          <span class="uhi-popover-lbl">PM</span>
+          <div class="uhi-pop-track">
+            <div id="uhi-pop-bar-pm" class="uhi-pop-fill"></div>
           </div>
-          <span id="uhi-pop-pm" class="uhi-popover-val" style="color:#E74C3C;">—</span>
+          <span id="uhi-pop-pm" class="uhi-popover-num">—</span>
         </div>
-        <div class="uhi-popover-hint">Click cell to open detailed analysis</div>
+        <div class="uhi-popover-hint">Click cell to view detailed analytics</div>
       </div>
 
-      <!-- Side Detail Panel -->
-      <aside id="uhi-side-panel" class="uhi-side-panel" aria-label="Microclimate Details Panel">
+      <!-- Right Slide-out: Data Summary on Click (Frameless Clean Layout) -->
+      <aside id="uhi-side-panel" class="uhi-slide-panel uhi-side-panel" aria-label="Microclimate Details Panel" role="region">
         <div class="uhi-panel-header">
-          <div class="uhi-panel-title">Cell Microclimate Details</div>
-          <button id="uhi-close-btn" class="uhi-close-btn" title="Close Panel" aria-label="Close panel">&times;</button>
+          <h2 class="uhi-panel-title">Cell Microclimate Details</h2>
+          <button id="uhi-close-btn" class="uhi-close-btn" title="Close Details Panel" aria-label="Close details panel">&times;</button>
         </div>
 
-        <!-- Tree Canopy Card -->
-        <div class="uhi-card">
-          <div class="uhi-card-label uhi-canopy-label">Tree Canopy Cover</div>
-          <div id="uhi-panel-canopy" class="uhi-card-main" style="color: #15803D;">—</div>
-          <div class="uhi-canopy-bar-bg">
-            <div id="uhi-canopy-fill" class="uhi-canopy-bar-fill"></div>
+        <div class="uhi-panel-body">
+          <!-- Section 1: Tree Canopy Cover -->
+          <div class="uhi-detail-section">
+            <div class="uhi-detail-lbl">Tree Canopy Cover</div>
+            <div id="uhi-panel-canopy" class="uhi-detail-primary-val">—</div>
+            <div class="uhi-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="uhi-canopy-progress">
+              <div id="uhi-canopy-fill" class="uhi-meter-fill"></div>
+            </div>
+            <div id="uhi-panel-canopy-sub" class="uhi-detail-subtext"></div>
           </div>
-          <div id="uhi-panel-canopy-sub" class="uhi-card-sub"></div>
-        </div>
 
-        <!-- Persistence Card -->
-        <div class="uhi-card">
-          <div class="uhi-card-label">Diurnal Hot / Cold Spot Persistence</div>
-          <div id="uhi-panel-pers" class="uhi-card-main">—</div>
-          <div id="uhi-panel-pers-sub" class="uhi-card-sub"></div>
-        </div>
+          <!-- Section 2: Diurnal Persistence -->
+          <div class="uhi-detail-section">
+            <div class="uhi-detail-lbl">Diurnal Hot / Cold Spot Persistence</div>
+            <div id="uhi-panel-pers" class="uhi-detail-headline">—</div>
+            <div id="uhi-panel-pers-sub" class="uhi-detail-subtext"></div>
+          </div>
 
-        <!-- Diurnal Temperatures Card -->
-        <div class="uhi-card">
-          <div class="uhi-card-label">Diurnal Temperatures &amp; Anomalies</div>
-          <div class="uhi-diurnal-grid">
-            <!-- AM -->
-            <div class="uhi-diurnal-item">
-              <div class="uhi-diurnal-label" style="color:#2980B9;">Morning</div>
-              <div id="uhi-d-am-val" class="uhi-diurnal-val" style="color:#2980B9;">—</div>
-              <div id="uhi-d-am-anom" class="uhi-diurnal-anom" style="color:#1F2937;">—</div>
-              <div id="uhi-d-am-tag" class="uhi-diurnal-anom" style="font-size:10px;"></div>
-            </div>
-            <!-- AF -->
-            <div class="uhi-diurnal-item">
-              <div class="uhi-diurnal-label" style="color:#F39C12;">Afternoon</div>
-              <div id="uhi-d-af-val" class="uhi-diurnal-val" style="color:#F39C12;">—</div>
-              <div id="uhi-d-af-anom" class="uhi-diurnal-anom" style="color:#1F2937;">—</div>
-              <div id="uhi-d-af-tag" class="uhi-diurnal-anom" style="font-size:10px;"></div>
-            </div>
-            <!-- PM -->
-            <div class="uhi-diurnal-item">
-              <div class="uhi-diurnal-label" style="color:#E74C3C;">Evening</div>
-              <div id="uhi-d-pm-val" class="uhi-diurnal-val" style="color:#E74C3C;">—</div>
-              <div id="uhi-d-pm-anom" class="uhi-diurnal-anom" style="color:#1F2937;">—</div>
-              <div id="uhi-d-pm-tag" class="uhi-diurnal-anom" style="font-size:10px;"></div>
+          <!-- Section 3: Diurnal Temperatures & Anomalies -->
+          <div class="uhi-detail-section uhi-detail-section-last">
+            <div class="uhi-detail-lbl">Diurnal Temperatures &amp; Anomalies</div>
+            <div class="uhi-diurnal-columns">
+              <!-- Morning -->
+              <div class="uhi-diurnal-col">
+                <div class="uhi-col-lbl">Morning</div>
+                <div id="uhi-d-am-val" class="uhi-col-val">—</div>
+                <div id="uhi-d-am-anom" class="uhi-col-anom">—</div>
+                <div id="uhi-d-am-tag" class="uhi-col-badge">—</div>
+              </div>
+              <!-- Afternoon -->
+              <div class="uhi-diurnal-col">
+                <div class="uhi-col-lbl">Afternoon</div>
+                <div id="uhi-d-af-val" class="uhi-col-val">—</div>
+                <div id="uhi-d-af-anom" class="uhi-col-anom">—</div>
+                <div id="uhi-d-af-tag" class="uhi-col-badge">—</div>
+              </div>
+              <!-- Evening -->
+              <div class="uhi-diurnal-col">
+                <div class="uhi-col-lbl">Evening</div>
+                <div id="uhi-d-pm-val" class="uhi-col-val">—</div>
+                <div id="uhi-d-pm-anom" class="uhi-col-anom">—</div>
+                <div id="uhi-d-pm-tag" class="uhi-col-badge">—</div>
+              </div>
             </div>
           </div>
         </div>
       </aside>
 
-      <!-- Dynamic Map Legend -->
-      <div id="uhi-legend" class="uhi-legend"></div>
+      <!-- Dynamic Map Legend (Segmented) -->
+      <div id="uhi-legend" class="uhi-legend" role="region" aria-label="Map color scale and legend"></div>
 
       <!-- Loading Indicator -->
-      <div id="uhi-loading" class="uhi-loading">
-        <div class="uhi-spinner"></div>
+      <div id="uhi-loading" class="uhi-loading" role="status" aria-live="assertive">
+        <div class="uhi-spinner" aria-hidden="true"></div>
         <span>Loading Microclimate Data...</span>
       </div>
-    </div>
+    </main>
   </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <!-- Dashboard JS -->
+  <!-- Accessible Dashboard JS -->
   <script src="js/uhi-dashboard.js"></script>
 </body>
 </html>
-

@@ -38,14 +38,14 @@ An interactive, lightweight, zero-build web dashboard designed to explore the hi
 
 ```
 web_dashboard/
-├── index.html                      # Main standalone application page
+├── index.html                      # Main standalone application page (WCAG 2.1 accessible, segmented colormaps)
 ├── embed_example.html              # Responsive iframe embedding demonstration
 ├── README.md                       # Documentation and embedding guide
 ├── ARCHITECTURE_AND_DATA_FORMAT.md # Detailed architecture and binary data spec
 ├── css/
-│   └── uhi-dashboard.css           # Clean, modern styles adhering to GEMINI.md
+│   └── uhi-dashboard.css           # Clean, frameless styles adhering to WCAG 2.1 & #34495E headings
 ├── js/
-│   └── uhi-dashboard.js            # Analytical projection and interactive logic
+│   └── uhi-dashboard.js            # Analytical projection, 7-seg & quintile colormaps, interactive logic
 └── data/
     ├── manifest.json               # Grid dimensions, bounds, stats, and color LUTs
     ├── grid_data.bin               # Packed typed arrays for all 144,438 grid cells
